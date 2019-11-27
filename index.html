@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
+  <title>Click to smash</title>
   <style>
     html {
       overflow: hidden;
@@ -55,7 +56,6 @@
       const x2 = x + segmentLength * Math.cos(angle);
       const y2 = y + segmentLength * Math.sin(angle);
       for (const crack of cracks) {
-        const [bx1, by1, bx2, by2] = crack;
         if (intersects(crack, [x, y, x2, y2])) {
           continue angle_loop;
         }
