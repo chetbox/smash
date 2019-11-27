@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <style>
+    html {
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas></canvas>
+</body>
+<script>
+  const canvas = document.querySelector('canvas');
+  const context = canvas.getContext('2d');
+
+  const dpr = window.devicePixelRatio;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  context.scale(dpr, dpr);
+  context.lineJoin = 'bevel';
+
+  context.rect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'black';
+  context.fill();
+
+  let cracks = [];
+
+  function ccw([ax, ay], [bx, by], [cx, cy]) {
+    return (cy - ay) * (bx - ax) > (by - ay) * (cx - ax);
+  }
+
+  function intersects([ax1, ay1, ax2, ay2], [bx1, by1, bx2, by2]) {
+    return ccw([ax1, ay1], [bx1, by1], [bx2, by2]) !== ccw([ax2, ay2], [bx1, by1], [bx2, by2]) && ccw([ax1, ay1], [ax2, ay2], [bx1, by1]) !== ccw([ax1, ay1], [ax2, ay2], [bx2, by2])
+  }
+
+  function smash(x, y, meanPieces, meanSegmentLength) {
+    if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) {
+      return;
+    }
+
+    const startAngle = Math.random() * 2 * Math.PI;
+    const newCracks = [];
+
+    angle_loop:
+    for (let angle = startAngle; angle < startAngle + 2 * Math.PI; angle += Math.random() * 2 * (2 * Math.PI) / meanPieces) {
+      const segmentLength = Math.random() * meanSegmentLength + meanSegmentLength / 2;
+      const x2 = x + segmentLength * Math.cos(angle);
+      const y2 = y + segmentLength * Math.sin(angle);
+      for (const crack of cracks) {
+        const [bx1, by1, bx2, by2] = crack;
+        if (intersects(crack, [x, y, x2, y2])) {
+          continue angle_loop;
+        }
+      }
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(x2, y2);
+      context.strokeStyle = 'white';
+      context.lineWidth = 1 * dpr;
+      context.stroke();
+      newCracks.push([x, y, x2, y2]);
+    }
+    cracks = cracks.concat(newCracks);
+    for (const [, , x2, y2] of newCracks) {
+      smash(x2, y2, meanPieces, meanSegmentLength);
+    }
+  }
+
+  canvas.addEventListener('click', e => {
+    const { layerX: x, layerY: y } = e;
+    smash(x, y, 3, 100);
+  });
+
+  if (location.hash.replace(/^#/, '') === 'auto') {
+    setInterval(() => {
+      smash(Math.random() * canvas.width, Math.random() * canvas.height, 3, 100)
+    }, 500);
+  }
+
+</script>
+
+</html>
