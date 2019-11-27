@@ -42,16 +42,17 @@
     return ccw([ax1, ay1], [bx1, by1], [bx2, by2]) !== ccw([ax2, ay2], [bx1, by1], [bx2, by2]) && ccw([ax1, ay1], [ax2, ay2], [bx1, by1]) !== ccw([ax1, ay1], [ax2, ay2], [bx2, by2])
   }
 
-  function smash(x, y, meanPieces, meanSegmentLength) {
+  function smash(x, y, fromAngle, toAngle, meanPieces, meanSegmentLength) {
     if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) {
       return;
     }
 
-    const startAngle = Math.random() * 2 * Math.PI;
+    const startAngle = fromAngle + Math.random() * (toAngle - fromAngle);
+    console.log(fromAngle, toAngle, '->', startAngle);
     const newCracks = [];
 
     angle_loop:
-    for (let angle = startAngle; angle < startAngle + 2 * Math.PI; angle += Math.random() * 2 * (2 * Math.PI) / meanPieces) {
+    for (let angle = startAngle; angle < toAngle; angle += Math.random() * 2 * (toAngle - fromAngle) / meanPieces) {
       const segmentLength = Math.random() * meanSegmentLength + meanSegmentLength / 2;
       const x2 = x + segmentLength * Math.cos(angle);
       const y2 = y + segmentLength * Math.sin(angle);
@@ -66,22 +67,22 @@
       context.strokeStyle = 'white';
       context.lineWidth = 1 * dpr;
       context.stroke();
-      newCracks.push([x, y, x2, y2]);
+      newCracks.push([x, y, x2, y2, angle]);
     }
     cracks = cracks.concat(newCracks);
-    for (const [, , x2, y2] of newCracks) {
-      smash(x2, y2, meanPieces, meanSegmentLength);
+    for (const [, , x2, y2, angle] of newCracks) {
+      smash(x2, y2, angle - Math.PI / 3, angle + Math.PI / 3, meanPieces, meanSegmentLength);
     }
   }
 
   canvas.addEventListener('click', e => {
     const { layerX: x, layerY: y } = e;
-    smash(x, y, 3, 100);
+    smash(x, y, 0, 2 * Math.PI, 5, 100);
   });
 
   if (location.hash.replace(/^#/, '') === 'auto') {
     setInterval(() => {
-      smash(Math.random() * canvas.width, Math.random() * canvas.height, 3, 100)
+      smash(Math.random() * canvas.width, Math.random() * canvas.height, 0, 2 * Math.PI, 5, 100);
     }, 500);
   }
 
